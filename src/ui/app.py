@@ -14,7 +14,8 @@ ARTIFACTS = Path(__file__).resolve().parent.parent.parent / "artifacts"
 METRICS_BIN = ARTIFACTS / "metrics.json"
 METRICS_MULTI = ARTIFACTS / "metrics_multiclass.json"
 
-API = "http://127.0.0.1:8000"
+from src.config import API_HOST
+API = API_HOST
 
 st.sidebar.title("🔐 Cyber Threat Detector")
 page = st.sidebar.radio("Navigation", ["Dashboard", "Batch Prediction", "Live Demo"])

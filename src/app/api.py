@@ -57,16 +57,7 @@ class Event(BaseModel):
 
 app = FastAPI(title="Cyber Threat Detector", version="1.0.0")
 
-_model = None
-
-def get_model():
-    global _model
-    if _model is None:
-        model_path = ARTIFACTS / "model.joblib"
-        if not model_path.exists():
-            raise RuntimeError("Model not found. Train it with: python src/train.py")
-        _model = joblib.load(model_path)
-    return _model
+from .model_loader import get_binary_model as get_model
 
 @app.get("/health")
 def health():
@@ -84,16 +75,7 @@ def predict(evt: Event):
     }
 
 
-_model_multi = None
-
-def get_model_multi():
-    global _model_multi
-    if _model_multi is None:
-        model_path = ARTIFACTS / "model_multiclass.joblib"
-        if not model_path.exists():
-            raise RuntimeError("Multiclass model not found. Train it with: python src/train.py")
-        _model_multi = joblib.load(model_path)
-    return _model_multi
+from .model_loader import get_multiclass_model as get_model_multi
 
 
 class BatchEvents(BaseModel):

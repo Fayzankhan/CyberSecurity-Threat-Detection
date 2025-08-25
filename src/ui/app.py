@@ -9,22 +9,29 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
-# Add project root to Python path and print debug info
+# Configure Streamlit page first
+st.set_page_config(
+    page_title="Cyber Threat Detector",
+    page_icon="🔐",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Add project root to Python path
 try:
     project_root = Path(__file__).resolve().parent.parent.parent
-    st.write(f"Project root: {project_root}")
     if str(project_root) not in sys.path:
         sys.path.append(str(project_root))
-        st.write(f"Added to Python path: {project_root}")
     
     from src.utils.columns import ALL_FEATURES
-    st.write("Successfully imported ALL_FEATURES")
 except Exception as e:
-    st.error(f"Import error: {str(e)}")
+    st.error("⚠️ Setup Error")
+    st.error(f"Error details: {str(e)}")
     st.code(traceback.format_exc())
-    raise
+    st.info("Please contact support if this error persists.")
+    st.stop()
 
-st.set_page_config(page_title="Cyber Threat Detector", layout="wide")
+# Initialize paths
 ARTIFACTS = Path(__file__).resolve().parent.parent.parent / "artifacts"
 METRICS_BIN = ARTIFACTS / "metrics.json"
 METRICS_MULTI = ARTIFACTS / "metrics_multiclass.json"

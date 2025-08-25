@@ -83,16 +83,41 @@ def load_metrics():
     return bin_m, multi_m
 
 def call_api(path: str, payload: dict):
-    """Make API call with error handling"""
+    """Make API call with detailed error handling"""
     try:
         url = f"{API}{path}"
-        logger.info(f"Calling API: {url}")
-        r = requests.post(url, json=payload, timeout=10)
-        r.raise_for_status()
-        return r.json()
+        st.info(f"Making API request to: {url}")
+        
+        # Make the request with increased timeout
+        r = requests.post(url, json=payload, timeout=30)
+        
+        # Check if we got a JSON response
+        try:
+            response_data = r.json()
+        except Exception as e:
+            st.error(f"Failed to parse API response as JSON: {str(e)}")
+            st.code(r.text)  # Show raw response
+            raise
+        
+        # Check for error in response
+        if "error" in response_data:
+            st.error(f"API Error: {response_data['error']}")
+            if "detail" in response_data:
+                st.code(response_data["detail"])
+            raise Exception(response_data["error"])
+        
+        # If we got here, request was successful
+        st.success("API request successful!")
+        return response_data
+        
+    except requests.exceptions.Timeout:
+        st.error("API request timed out. Please try again.")
+        raise
+    except requests.exceptions.ConnectionError:
+        st.error("Could not connect to API. Please check if the API server is running.")
+        raise
     except Exception as e:
-        logger.error(f"API call failed: {str(e)}")
-        st.error(f"API call failed: {str(e)}")
+        st.error(f"API request failed: {str(e)}")
         raise
 
 # Page content

@@ -15,7 +15,8 @@ METRICS_BIN = ARTIFACTS / "metrics.json"
 METRICS_MULTI = ARTIFACTS / "metrics_multiclass.json"
 
 from src.config import API_HOST
-API = API_HOST
+# Try to get API URL from Streamlit secrets (for cloud deployment)
+API = st.secrets.get("api_url", API_HOST)
 
 st.sidebar.title("🔐 Cyber Threat Detector")
 page = st.sidebar.radio("Navigation", ["Dashboard", "Batch Prediction", "Live Demo"])

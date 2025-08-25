@@ -1,21 +1,28 @@
 import time
 import json
+import sys
 from pathlib import Path
+import traceback
 
 import requests
 import pandas as pd
 import streamlit as st
 import plotly.express as px
 
-import sys
-from pathlib import Path
-
-# Add project root to Python path
-project_root = Path(__file__).resolve().parent.parent.parent
-if str(project_root) not in sys.path:
-    sys.path.append(str(project_root))
-
-from src.utils.columns import ALL_FEATURES
+# Add project root to Python path and print debug info
+try:
+    project_root = Path(__file__).resolve().parent.parent.parent
+    st.write(f"Project root: {project_root}")
+    if str(project_root) not in sys.path:
+        sys.path.append(str(project_root))
+        st.write(f"Added to Python path: {project_root}")
+    
+    from src.utils.columns import ALL_FEATURES
+    st.write("Successfully imported ALL_FEATURES")
+except Exception as e:
+    st.error(f"Import error: {str(e)}")
+    st.code(traceback.format_exc())
+    raise
 
 st.set_page_config(page_title="Cyber Threat Detector", layout="wide")
 ARTIFACTS = Path(__file__).resolve().parent.parent.parent / "artifacts"

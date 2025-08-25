@@ -66,7 +66,7 @@ The UI will be available at:
 ### Production Deployment
 
 The application is deployed and available at:
-- Frontend (Streamlit): https://cyber-threat-detector.streamlit.app
+- Frontend (Streamlit): https://cybersecurity-threat-detection-pvtnkqz3ijezo22xeadxvj.streamlit.app
 - Backend API (Render): https://cyber-threat-detector-api.onrender.com
 
 To deploy your own instance:

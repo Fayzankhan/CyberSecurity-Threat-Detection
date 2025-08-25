@@ -34,8 +34,10 @@ from src.config import API_HOST
 # Try to get API URL from Streamlit secrets (for cloud deployment)
 try:
     API = st.secrets["api_url"]
-except Exception:
+    st.sidebar.success(f"Connected to API: {API}")
+except Exception as e:
     API = API_HOST
+    st.sidebar.warning(f"Using default API: {API}")
 
 st.sidebar.title("🔐 Cyber Threat Detector")
 page = st.sidebar.radio("Navigation", ["Dashboard", "Batch Prediction", "Live Demo"])

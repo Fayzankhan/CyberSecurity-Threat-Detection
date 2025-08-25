@@ -7,6 +7,14 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
+import sys
+from pathlib import Path
+
+# Add project root to Python path
+project_root = Path(__file__).resolve().parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.append(str(project_root))
+
 from src.utils.columns import ALL_FEATURES
 
 st.set_page_config(page_title="Cyber Threat Detector", layout="wide")
@@ -15,8 +23,12 @@ METRICS_BIN = ARTIFACTS / "metrics.json"
 METRICS_MULTI = ARTIFACTS / "metrics_multiclass.json"
 
 from src.config import API_HOST
+
 # Try to get API URL from Streamlit secrets (for cloud deployment)
-API = st.secrets.get("api_url", API_HOST)
+try:
+    API = st.secrets["api_url"]
+except Exception:
+    API = API_HOST
 
 st.sidebar.title("🔐 Cyber Threat Detector")
 page = st.sidebar.radio("Navigation", ["Dashboard", "Batch Prediction", "Live Demo"])

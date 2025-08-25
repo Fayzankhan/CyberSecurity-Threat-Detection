@@ -173,13 +173,17 @@ elif page == "Live Demo":
         st.session_state.live_idx = 0
     if "live_df" not in st.session_state:
         try:
-            # Load NSL-KDD test set from data/
+            # Try to download dataset if not present
             data_path = Path(__file__).resolve().parent.parent.parent / "data" / "KDDTest+.txt"
-            from src.utils.columns import CSV_COLUMNS
             if not data_path.exists():
-                st.warning("Dataset not found. Run: python src/train.py (it downloads data).")
-            else:
-                st.session_state.live_df = pd.read_csv(data_path, names=CSV_COLUMNS)
+                st.warning("Downloading dataset...")
+                from src.download_data import main as download_data
+                download_data()
+                st.success("Dataset downloaded successfully!")
+            
+            from src.utils.columns import CSV_COLUMNS
+            st.session_state.live_df = pd.read_csv(data_path, names=CSV_COLUMNS)
+            st.success(f"Loaded {len(st.session_state.live_df)} records from dataset")
         except Exception as e:
             logger.error(f"Error loading test data: {str(e)}")
             st.error(f"Error loading test data: {str(e)}")

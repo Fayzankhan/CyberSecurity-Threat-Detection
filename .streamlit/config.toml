@@ -1,10 +1,13 @@
 [server]
-port = 8502
+port = 8501
 enableCORS = true
 enableXsrfProtection = true
+maxUploadSize = 200
+maxMessageSize = 200
 
 [browser]
 gatherUsageStats = false
+serverAddress = "0.0.0.0"
 
 [theme]
 primaryColor = "#FF4B4B"
@@ -15,3 +18,4 @@ font = "sans serif"
 
 [logger]
 level = "info"
+messageFormat = "%(asctime)s %(message)s"

@@ -9,7 +9,9 @@ import pandas as pd
 
 from ..utils.columns import ALL_FEATURES
 
-ARTIFACTS = Path(__file__).resolve().parent.parent.parent / "artifacts"
+from ..config.settings import ARTIFACTS_DIR, IS_PRODUCTION, PORT, ALLOWED_HOSTS
+
+ARTIFACTS = ARTIFACTS_DIR
 
 class Event(BaseModel):
     # Define all 41 features

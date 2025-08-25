@@ -40,6 +40,8 @@ A machine learning-based cyber threat detection system using the NSL-KDD dataset
 
 ## Running the Application
 
+### Local Development
+
 The application consists of two components that need to run simultaneously:
 
 1. **Start the FastAPI server**
@@ -60,6 +62,35 @@ The application consists of two components that need to run simultaneously:
 The UI will be available at:
 - Local URL: http://localhost:8502
 - Network URL: http://[your-ip]:8502
+
+### Production Deployment
+
+The application is deployed and available at:
+- Frontend (Streamlit): https://cyber-threat-detector.streamlit.app
+- Backend API (Render): https://cyber-threat-detector-api.onrender.com
+
+To deploy your own instance:
+
+1. **Deploy the FastAPI Backend**:
+   - Fork this repository
+   - Sign up on [Render.com](https://render.com)
+   - Create a new Web Service
+   - Connect your repository
+   - Configure:
+     - Build Command: `pip install -r requirements.txt`
+     - Start Command: `gunicorn src.app.api:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT`
+     - Environment Variables:
+       - `ENVIRONMENT`: `production`
+
+2. **Deploy the Streamlit Frontend**:
+   - Go to [Streamlit Cloud](https://share.streamlit.app)
+   - Connect your repository
+   - Configure:
+     - Main file path: `src/ui/app.py`
+     - Python version: `3.10.12`
+     - Add secret:
+       - Key: `api_url`
+       - Value: Your Render API URL
 
 ## Application Components
 

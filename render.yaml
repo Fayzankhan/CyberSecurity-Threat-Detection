@@ -2,10 +2,19 @@ services:
   - type: web
     name: cyber-threat-detector-api
     env: python
+    region: oregon  # Choose the region closest to your users
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn src.app.api:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    startCommand: gunicorn src.app.api:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.12
       - key: ENVIRONMENT
         value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /health
+    autoDeploy: true
+    disk:
+      name: artifacts
+      mountPath: /opt/render/project/src/artifacts
+      sizeGB: 1

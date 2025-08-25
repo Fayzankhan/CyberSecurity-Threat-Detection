@@ -14,13 +14,20 @@ import plotly.express as px
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Configure Streamlit page first
+# Disable file watcher to avoid inotify limits
+import os
+os.environ['STREAMLIT_SERVER_WATCH_DIRS'] = 'false'
+
+# Configure Streamlit page
 try:
     st.set_page_config(
         page_title="Cyber Threat Detector",
         page_icon="🔐",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="expanded",
+        menu_items={
+            'About': '# Cyber Threat Detector\nA machine learning-based cyber threat detection system.'
+        }
     )
 except Exception as e:
     st.write("Error setting page config:", str(e))

@@ -20,5 +20,8 @@ services:
         value: production
       - key: LOG_LEVEL
         value: DEBUG
+      - key: TRUST_PROXY_HEADERS
+        value: "true"
+      # Set in Render dashboard (Secrets): API_SECRET_KEY, CORS_ORIGINS, RATE_LIMIT_PER_MINUTE
     healthCheckPath: /health
     autoDeploy: true

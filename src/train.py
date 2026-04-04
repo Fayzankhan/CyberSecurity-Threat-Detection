@@ -57,10 +57,6 @@ def add_coarse_attack(df: pd.DataFrame) -> pd.DataFrame:
     df["attack_type"] = df[LABEL].map(lambda x: ATTACK_TYPE_MAP.get(str(x).strip(), "normal"))
     return df
 
-    df = df.copy()
-    df["target"] = (df[LABEL] != "normal").astype(int)  # 1 = attack, 0 = normal
-    return df
-
 
 def build_pipeline(categorical: list[str]) -> Pipeline:
     preproc = ColumnTransformer(
@@ -129,9 +125,6 @@ def train_and_evaluate() -> None:
     if roc is not None:
         print(f"ROC-AUC: {roc:.4f}")
 
-
-if __name__ == "__main__":
-    train_and_evaluate()
 
 def train_multiclass() -> None:
     """Train a multiclass classifier for coarse attack categories."""

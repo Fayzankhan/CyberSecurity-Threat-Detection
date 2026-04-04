@@ -1,3 +1,4 @@
+import os
 import time
 import json
 import sys
@@ -207,6 +208,8 @@ except Exception as e:
 ARTIFACTS = Path(__file__).resolve().parent.parent.parent / "artifacts"
 METRICS_BIN = ARTIFACTS / "metrics.json"
 METRICS_MULTI = ARTIFACTS / "metrics_multiclass.json"
+METRICS_DL_BIN = ARTIFACTS / "metrics_dl_binary.json"
+METRICS_DL_MULTI = ARTIFACTS / "metrics_dl_multiclass.json"
 
 # Configure API
 try:
@@ -234,8 +237,8 @@ st.sidebar.markdown(
 page = st.sidebar.radio("Navigation", ["Dashboard", "Batch Prediction", "Live Demo"])
 
 def load_metrics():
-    """Load model metrics from files"""
-    bin_m, multi_m = None, None
+    """Load model metrics from files (sklearn + optional PyTorch CNN/LSTM)."""
+    bin_m, multi_m, dl_bin_m, dl_multi_m = None, None, None, None
     try:
         if METRICS_BIN.exists():
             with open(METRICS_BIN) as f:
@@ -243,10 +246,36 @@ def load_metrics():
         if METRICS_MULTI.exists():
             with open(METRICS_MULTI) as f:
                 multi_m = json.load(f)
+        if METRICS_DL_BIN.exists():
+            with open(METRICS_DL_BIN) as f:
+                dl_bin_m = json.load(f)
+        if METRICS_DL_MULTI.exists():
+            with open(METRICS_DL_MULTI) as f:
+                dl_multi_m = json.load(f)
     except Exception as e:
         logger.error(f"Error loading metrics: {str(e)}")
         st.error(f"Failed to load metrics: {str(e)}")
-    return bin_m, multi_m
+    return bin_m, multi_m, dl_bin_m, dl_multi_m
+
+
+def prediction_payload(records: list, backend_choice: str) -> dict:
+    mb = "deep" if backend_choice.strip().startswith("PyTorch") else "sklearn"
+    return {"records": records, "model_backend": mb}
+
+
+def _api_auth_headers() -> dict:
+    """Bearer token from Streamlit secrets or env when API_SECRET_KEY is configured on the server."""
+    key = None
+    try:
+        key = st.secrets.get("api_key")
+    except Exception:
+        pass
+    if not key:
+        key = os.environ.get("API_SECRET_KEY") or os.environ.get("API_KEY")
+    if key:
+        return {"Authorization": f"Bearer {key.strip()}"}
+    return {}
+
 
 def call_api(path: str, payload: dict):
     """Make API call with detailed error handling"""
@@ -255,7 +284,7 @@ def call_api(path: str, payload: dict):
         st.info(f"Making API request to: {url}")
         
         # Make the request with increased timeout
-        r = requests.post(url, json=payload, timeout=30)
+        r = requests.post(url, json=payload, headers=_api_auth_headers(), timeout=30)
         
         # Check if we got a JSON response
         try:
@@ -289,36 +318,62 @@ def call_api(path: str, payload: dict):
 # Page content
 if page == "Dashboard":
     page_heading("Model performance", "chart")
-    bin_m, multi_m = load_metrics()
-    # Use responsive columns - will stack on mobile
-    c1, c2 = st.columns(2)
+    bin_m, multi_m, dl_bin_m, dl_multi_m = load_metrics()
+    st.caption(
+        "Sklearn = RandomForest on one-hot + passthrough. Deep = 1D-CNN or LSTM over the "
+        "preprocessed vector (one-hot + scaled numerics). Train: `python -m src.train_dl` or `--arch lstm`."
+    )
 
+    c1, c2 = st.columns(2)
     with c1:
-        st.subheader("Binary Model (Attack vs Normal)")
+        st.subheader("Binary — RandomForest")
         if bin_m:
             st.metric("ROC-AUC", f"{bin_m.get('roc_auc', None):.3f}" if bin_m.get('roc_auc') is not None else "N/A")
-            # Make JSON scrollable on mobile
             st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
             st.json(bin_m.get("classification_report", {}))
             st.markdown('</div>', unsafe_allow_html=True)
         else:
-            st.warning("Binary model metrics not available")
+            st.warning("Metrics not available (run `python -m src.train`).")
 
     with c2:
-        st.subheader("Multiclass Model (dos/probe/r2l/u2r/normal)")
+        st.subheader("Multiclass — RandomForest")
         if multi_m:
-            # Make JSON scrollable on mobile
             st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
             st.json(multi_m.get("classification_report", {}))
             st.markdown('</div>', unsafe_allow_html=True)
         else:
-            st.warning("Multiclass model metrics not available")
+            st.warning("Metrics not available (run `python -m src.train`).")
+
+    c3, c4 = st.columns(2)
+    with c3:
+        st.subheader("Binary — PyTorch (CNN / LSTM)")
+        if dl_bin_m:
+            st.metric("ROC-AUC", f"{dl_bin_m.get('roc_auc', None):.3f}" if dl_bin_m.get('roc_auc') is not None else "N/A")
+            st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+            st.json(dl_bin_m.get("classification_report", {}))
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.info("Train with `python -m src.train_dl` to generate deep learning metrics.")
+
+    with c4:
+        st.subheader("Multiclass — PyTorch (CNN / LSTM)")
+        if dl_multi_m:
+            st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+            st.json(dl_multi_m.get("classification_report", {}))
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.info("Train with `python -m src.train_dl` to generate deep learning metrics.")
 
 elif page == "Batch Prediction":
     page_heading("Upload CSV and detect threats", "folder")
     uploaded = st.file_uploader("Upload CSV with the 41 feature columns", type=["csv"])
-    # Radio buttons will stack on mobile due to CSS
     model_type = st.radio("Model", ["Binary", "Multiclass"], horizontal=True)
+    backend = st.radio(
+        "Model backend",
+        ["RandomForest (sklearn)", "PyTorch (CNN/LSTM)"],
+        horizontal=True,
+        help="Deep models require `python -m src.train_dl` (default CNN) or `--arch lstm`.",
+    )
 
     if uploaded:
         try:
@@ -335,11 +390,17 @@ elif page == "Batch Prediction":
                 if st.button("Run detection"):
                     with st.spinner("Processing..."):
                         if model_type == "Binary":
-                            res = call_api("/predict-batch", {"records": df[ALL_FEATURES].to_dict(orient="records")})
+                            res = call_api(
+                                "/predict-batch",
+                                prediction_payload(df[ALL_FEATURES].to_dict(orient="records"), backend),
+                            )
                             df["attack_probability"] = res["probabilities"]
                             df["is_attack"] = res["predictions"]
                         else:
-                            res = call_api("/predict-multiclass", {"records": df[ALL_FEATURES].to_dict(orient="records")})
+                            res = call_api(
+                                "/predict-multiclass",
+                                prediction_payload(df[ALL_FEATURES].to_dict(orient="records"), backend),
+                            )
                             df["predicted_class"] = res["predictions"]
                             df["confidence"] = res["confidence"]
                         st.success("Analysis complete.")
@@ -373,8 +434,13 @@ elif page == "Live Demo":
     page_heading("Live threat detection (NSL-KDD test stream)", "bolt")
 
     rate = st.slider("Events per refresh", min_value=5, max_value=200, value=25, step=5)
-    # Radio buttons will stack on mobile due to CSS
     model_type = st.radio("Model", ["Binary", "Multiclass"], horizontal=True)
+    backend = st.radio(
+        "Model backend",
+        ["RandomForest (sklearn)", "PyTorch (CNN/LSTM)"],
+        horizontal=True,
+        help="Switching backend: use Reset stream to avoid mixing scores. Deep models need train_dl artifacts.",
+    )
 
     if "live_idx" not in st.session_state:
         st.session_state.live_idx = 0
@@ -405,13 +471,19 @@ elif page == "Live Demo":
         if start < end:
             try:
                 if model_type == "Binary":
-                    res = call_api("/predict-batch", {"records": batch[ALL_FEATURES].to_dict(orient='records')})
+                    res = call_api(
+                        "/predict-batch",
+                        prediction_payload(batch[ALL_FEATURES].to_dict(orient="records"), backend),
+                    )
                     batch_preds = pd.Series(res["predictions"], index=batch.index)
                     batch_prob = pd.Series(res["probabilities"], index=batch.index)
                     df.loc[batch.index, "is_attack"] = batch_preds
                     df.loc[batch.index, "attack_probability"] = batch_prob
                 else:
-                    res = call_api("/predict-multiclass", {"records": batch[ALL_FEATURES].to_dict(orient='records')})
+                    res = call_api(
+                        "/predict-multiclass",
+                        prediction_payload(batch[ALL_FEATURES].to_dict(orient="records"), backend),
+                    )
                     batch_cls = pd.Series(res["predictions"], index=batch.index)
                     df.loc[batch.index, "predicted_class"] = batch_cls
 
@@ -461,4 +533,7 @@ elif page == "Live Demo":
                     df["predicted_class"] = None
                 st.rerun()
 
-    st.info("Tip: Keep the FastAPI server running while using Live Demo.")
+    st.info(
+        "Tip: Keep the FastAPI server running. For IoT-style micro-batches, use the WebSocket "
+        "`/ws/predict` (see `python -m src.stream_simulator`)."
+    )

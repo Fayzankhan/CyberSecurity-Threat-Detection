@@ -10,6 +10,27 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
+_UI_DIR = Path(__file__).resolve().parent
+_FAVICON = _UI_DIR / "favicon.svg"
+
+# Minimal stroke icons (avoid emoji; consistent with dashboard UIs)
+_S = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
+ICONS = {
+    "shield": _S + '<path d="M12 3 4 7v5c0 5 3.5 9 8 10 4.5-1 8-5 8-10V7l-8-4Z"/></svg>',
+    "chart": _S + '<path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>',
+    "folder": _S + '<path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>',
+    "bolt": _S + '<path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>',
+}
+
+
+def page_heading(text: str, icon_key: str) -> None:
+    svg = ICONS.get(icon_key, ICONS["shield"])
+    st.markdown(
+        f'<h1 class="page-h1">{svg}<span>{text}</span></h1>',
+        unsafe_allow_html=True,
+    )
+
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,7 +43,7 @@ os.environ['STREAMLIT_SERVER_WATCH_DIRS'] = 'false'
 try:
     st.set_page_config(
         page_title="Cyber Threat Detector",
-        page_icon="🔐",
+        page_icon=str(_FAVICON) if _FAVICON.exists() else None,
         layout="wide",
         initial_sidebar_state="expanded",
         menu_items={
@@ -31,6 +52,141 @@ try:
     )
 except Exception as e:
     st.write("Error setting page config:", str(e))
+
+# Add custom CSS for mobile responsiveness
+st.markdown("""
+    <style>
+        .page-h1 {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 600;
+            margin: 0 0 0.75rem 0;
+            line-height: 1.2;
+            color: inherit;
+        }
+        .page-h1 svg { flex-shrink: 0; width: 1.75rem; height: 1.75rem; opacity: 0.92; }
+        .ui-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 1.15rem;
+            margin-bottom: 1rem;
+            color: inherit;
+        }
+        .ui-brand svg { flex-shrink: 0; width: 1.35rem; height: 1.35rem; opacity: 0.9; }
+        /* Mobile-first responsive design */
+        @media screen and (max-width: 768px) {
+            /* Main content padding */
+            .main .block-container {
+                padding-top: 2rem;
+                padding-bottom: 2rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            /* Sidebar adjustments */
+            .css-1d391kg {
+                padding-top: 1rem;
+            }
+            
+            /* Title font size */
+            h1 {
+                font-size: 1.75rem !important;
+            }
+            
+            h2, h3 {
+                font-size: 1.25rem !important;
+            }
+            
+            /* Metric cards - stack vertically on mobile */
+            [data-testid="stMetricValue"] {
+                font-size: 1.5rem !important;
+            }
+            
+            [data-testid="stMetricLabel"] {
+                font-size: 0.9rem !important;
+            }
+            
+            /* Buttons - full width on mobile */
+            .stButton > button {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            /* File uploader */
+            .uploadedFile {
+                font-size: 0.9rem;
+            }
+            
+            /* Dataframe container - horizontal scroll */
+            .dataframe {
+                font-size: 0.8rem;
+                overflow-x: auto;
+                display: block;
+            }
+            
+            /* Radio buttons - stack vertically on mobile */
+            .stRadio > div {
+                flex-direction: column;
+            }
+            
+            .stRadio > div > label {
+                margin-bottom: 0.5rem;
+            }
+            
+            /* Slider adjustments */
+            .stSlider {
+                margin-bottom: 1rem;
+            }
+            
+            /* Chart containers */
+            .js-plotly-plot {
+                width: 100% !important;
+            }
+            
+            /* JSON display */
+            .stJson {
+                font-size: 0.75rem;
+                overflow-x: auto;
+            }
+            
+            /* Info/warning/error messages */
+            .stAlert {
+                font-size: 0.9rem;
+                padding: 0.75rem;
+            }
+            
+            /* Sidebar title */
+            .css-1v0mbdj {
+                font-size: 1.25rem !important;
+            }
+        }
+        
+        /* Tablet adjustments */
+        @media screen and (min-width: 769px) and (max-width: 1024px) {
+            .main .block-container {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+        
+        /* Ensure tables are scrollable */
+        .dataframe-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Better spacing for columns on mobile */
+        @media screen and (max-width: 768px) {
+            [data-testid="column"] {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # Add project root to Python path
 try:
@@ -41,7 +197,7 @@ try:
     from src.utils.columns import ALL_FEATURES
     logger.info("Successfully imported ALL_FEATURES")
 except Exception as e:
-    st.error("⚠️ Setup Error")
+    st.error("Setup error")
     st.error(f"Error details: {str(e)}")
     st.code(traceback.format_exc())
     st.info("Please contact support if this error persists.")
@@ -61,17 +217,20 @@ try:
     # Test API connection
     response = requests.get(f"{API}/health")
     if response.status_code == 200:
-        st.sidebar.success(f"✅ Connected to API: {API}")
+        st.sidebar.success(f"Connected to API: {API}")
     else:
-        st.sidebar.warning(f"⚠️ API returned status code: {response.status_code}")
+        st.sidebar.warning(f"API returned status code: {response.status_code}")
 except Exception as e:
     logger.error(f"API connection error: {str(e)}")
-    st.sidebar.error(f"❌ API connection failed: {str(e)}")
+    st.sidebar.error(f"API connection failed: {str(e)}")
     API = API_HOST
     st.sidebar.info(f"Using fallback API: {API}")
 
 # Main app UI
-st.sidebar.title("🔐 Cyber Threat Detector")
+st.sidebar.markdown(
+    f'<div class="ui-brand">{ICONS["shield"]}<span>Cyber Threat Detector</span></div>',
+    unsafe_allow_html=True,
+)
 page = st.sidebar.radio("Navigation", ["Dashboard", "Batch Prediction", "Live Demo"])
 
 def load_metrics():
@@ -129,39 +288,51 @@ def call_api(path: str, payload: dict):
 
 # Page content
 if page == "Dashboard":
-    st.title("📊 Model Performance")
+    page_heading("Model performance", "chart")
     bin_m, multi_m = load_metrics()
+    # Use responsive columns - will stack on mobile
     c1, c2 = st.columns(2)
 
     with c1:
         st.subheader("Binary Model (Attack vs Normal)")
         if bin_m:
             st.metric("ROC-AUC", f"{bin_m.get('roc_auc', None):.3f}" if bin_m.get('roc_auc') is not None else "N/A")
+            # Make JSON scrollable on mobile
+            st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
             st.json(bin_m.get("classification_report", {}))
+            st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.warning("Binary model metrics not available")
 
     with c2:
         st.subheader("Multiclass Model (dos/probe/r2l/u2r/normal)")
         if multi_m:
+            # Make JSON scrollable on mobile
+            st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
             st.json(multi_m.get("classification_report", {}))
+            st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.warning("Multiclass model metrics not available")
 
 elif page == "Batch Prediction":
-    st.title("📂 Upload CSV and Detect Threats")
+    page_heading("Upload CSV and detect threats", "folder")
     uploaded = st.file_uploader("Upload CSV with the 41 feature columns", type=["csv"])
+    # Radio buttons will stack on mobile due to CSS
     model_type = st.radio("Model", ["Binary", "Multiclass"], horizontal=True)
 
     if uploaded:
         try:
             df = pd.read_csv(uploaded)
-            st.write("Preview:", df.head())
+            st.write("Preview:")
+            # Make preview scrollable on mobile
+            st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+            st.dataframe(df.head(), use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
             missing = [c for c in ALL_FEATURES if c not in df.columns]
             if missing:
                 st.error(f"Missing columns: {missing}")
             else:
-                if st.button("🔍 Run Detection"):
+                if st.button("Run detection"):
                     with st.spinner("Processing..."):
                         if model_type == "Binary":
                             res = call_api("/predict-batch", {"records": df[ALL_FEATURES].to_dict(orient="records")})
@@ -171,7 +342,7 @@ elif page == "Batch Prediction":
                             res = call_api("/predict-multiclass", {"records": df[ALL_FEATURES].to_dict(orient="records")})
                             df["predicted_class"] = res["predictions"]
                             df["confidence"] = res["confidence"]
-                        st.success("Analysis complete! 🎉")
+                        st.success("Analysis complete.")
 
                     # Charts
                     st.subheader("Threat Summary")
@@ -187,18 +358,22 @@ elif page == "Batch Prediction":
                         st.plotly_chart(fig2, use_container_width=True)
 
                     st.subheader("Results")
-                    st.dataframe(df.head(100))
+                    # Make dataframe scrollable on mobile
+                    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+                    st.dataframe(df.head(100), use_container_width=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
 
                     csv = df.to_csv(index=False).encode("utf-8")
-                    st.download_button("⬇️ Download Results", csv, "threat_results.csv", "text/csv")
+                    st.download_button("Download results", csv, "threat_results.csv", "text/csv")
         except Exception as e:
             logger.error(f"Error processing file: {str(e)}")
             st.error(f"Error processing file: {str(e)}")
 
 elif page == "Live Demo":
-    st.title("⚡ Live Threat Detection (NSL-KDD Test Stream)")
+    page_heading("Live threat detection (NSL-KDD test stream)", "bolt")
 
     rate = st.slider("Events per refresh", min_value=5, max_value=200, value=25, step=5)
+    # Radio buttons will stack on mobile due to CSS
     model_type = st.radio("Model", ["Binary", "Multiclass"], horizontal=True)
 
     if "live_idx" not in st.session_state:
@@ -245,14 +420,18 @@ elif page == "Live Demo":
                 logger.error(f"Error in prediction: {str(e)}")
                 st.error(f"Error in prediction: {str(e)}")
 
-        # KPIs
+        # KPIs - responsive columns (will stack on mobile)
         total = st.session_state.live_idx
         attacks = int((df.loc[:end-1, "is_attack"]==1).sum()) if "is_attack" in df.columns else 0
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Processed events", total)
-        c2.metric("Detected attacks", attacks)
         rate_attacks = (attacks / total * 100.0) if total else 0.0
-        c3.metric("Attack rate", f"{rate_attacks:.2f}%")
+        # Use columns that stack on mobile
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.metric("Processed events", total)
+        with c2:
+            st.metric("Detected attacks", attacks)
+        with c3:
+            st.metric("Attack rate", f"{rate_attacks:.2f}%")
 
         # Charts
         if "is_attack" in df.columns:
@@ -267,17 +446,19 @@ elif page == "Live Demo":
             fig2 = px.bar(bar_df, x="class", y="count", title="Attack Types (live)")
             st.plotly_chart(fig2, use_container_width=True)
 
-        # Control buttons
-        colA, colB, colC = st.columns(3)
-        if colA.button("Next batch ▶️"):
-            st.experimental_rerun()
-        if colB.button("Reset 🔄"):
-            st.session_state.live_idx = 0
-            if "is_attack" in df.columns:
-                df["is_attack"] = None
-                df["attack_probability"] = None
-            if "predicted_class" in df.columns:
-                df["predicted_class"] = None
-            st.experimental_rerun()
+        # Control buttons - responsive layout
+        colA, colB, colC = st.columns([1, 1, 1])
+        with colA:
+            if st.button("Next batch", use_container_width=True):
+                st.rerun()
+        with colB:
+            if st.button("Reset stream", use_container_width=True):
+                st.session_state.live_idx = 0
+                if "is_attack" in df.columns:
+                    df["is_attack"] = None
+                    df["attack_probability"] = None
+                if "predicted_class" in df.columns:
+                    df["predicted_class"] = None
+                st.rerun()
 
     st.info("Tip: Keep the FastAPI server running while using Live Demo.")

@@ -3,7 +3,7 @@ services:
     name: cyber-threat-detector-api
     env: python
     region: oregon
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
     startCommand: |
       gunicorn src.app.api:app \
         --workers 1 \

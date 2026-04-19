@@ -81,7 +81,7 @@ To deploy your own instance:
        ```bash
        bash scripts/render_build.sh
        ```
-       This installs dependencies, runs `python -m src.train_dl --quick`, and **fails the build** if deep-learning artifacts are missing.
+       This installs dependencies, runs `python -m src.train_dl --quick` (which checks that DL files exist before exiting). The file `.render-buildpacks.json` must **not** override this with `pip install -e .` only — it is kept in sync with this command.
      - **Start Command**:
        ```bash
        gunicorn src.app.api:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120

@@ -1,7 +1,7 @@
 {
   "render": {
-    "buildCommand": "pip install -e .",
-    "startCommand": "gunicorn src.app.api:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT",
+    "buildCommand": "bash scripts/render_build.sh",
+    "startCommand": "gunicorn src.app.api:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120",
     "python": {
       "version": "3.10.12"
     }

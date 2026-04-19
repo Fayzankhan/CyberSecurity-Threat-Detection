@@ -263,6 +263,27 @@ def train_multiclass(arch: str, *, epochs: int | None = None) -> None:
     print(f"Model: {ARTIFACTS / 'model_dl_multiclass.pt'}")
 
 
+def _assert_dl_artifacts_on_disk() -> None:
+    """Fail fast if writes did not land (same paths inference uses)."""
+    expected = [
+        ARTIFACTS / "preprocess_dl_binary.joblib",
+        ARTIFACTS / "model_dl_binary.pt",
+        ARTIFACTS / "preprocess_dl_multiclass.joblib",
+        ARTIFACTS / "model_dl_multiclass.pt",
+    ]
+    missing = [p for p in expected if not p.is_file()]
+    if not missing:
+        return
+    names = []
+    if ARTIFACTS.is_dir():
+        names = sorted(p.name for p in ARTIFACTS.iterdir())
+    raise RuntimeError(
+        "train_dl finished but expected files are missing: "
+        + ", ".join(str(p) for p in missing)
+        + (f"\n{ARTIFACTS} contains: {names}" if names else f"\n{ARTIFACTS} is missing or empty")
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train 1D-CNN or LSTM on NSL-KDD (preprocessed tabular).")
     parser.add_argument(
@@ -284,6 +305,8 @@ def main() -> None:
     else:
         train_binary(args.arch)
         train_multiclass(args.arch)
+    _assert_dl_artifacts_on_disk()
+    print("=== DL artifact paths verified on disk ===")
 
 
 if __name__ == "__main__":

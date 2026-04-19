@@ -9,9 +9,6 @@ export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
 python -m pip install --upgrade pip
 python -m pip install --no-cache-dir -r requirements.txt
 
-echo "=== train_dl --quick (writes PyTorch backend artifacts) ==="
+echo "=== train_dl --quick (writes + self-verifies PyTorch artifacts) ==="
 python -m src.train_dl --quick
-
-echo "=== verify DL artifacts (same paths as FastAPI) ==="
-python "$ROOT/scripts/verify_dl_artifacts.py"
 echo "=== Render build OK ==="

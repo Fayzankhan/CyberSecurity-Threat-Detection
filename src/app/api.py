@@ -5,14 +5,17 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Literal
 import json
 import logging
+import os
 import pandas as pd
 from collections import Counter
 
 from ..config.settings import (
     API_SECRET_KEY,
+    ARTIFACTS_DIR,
     CORS_ORIGINS,
     EXPOSE_OPENAPI,
     RATE_LIMIT_PER_MINUTE,
+    ROOT_DIR,
 )
 
 from .predict_core import (
@@ -27,6 +30,7 @@ from .predict_core import (
     run_binary_predict,
     run_multiclass_predict,
 )
+from .render_dl_bootstrap import bootstrap_thread_alive, maybe_bootstrap_dl_async
 from .security_middleware import (
     APIKeyMiddleware,
     RateLimitMiddleware,
@@ -92,6 +96,9 @@ async def startup_event():
             logger.info("Deep learning binary artifacts present (loaded on first deep request).")
         if DL_MULTICLASS_MODEL_PATH.exists():
             logger.info("Deep learning multiclass artifacts present (loaded on first deep request).")
+        maybe_bootstrap_dl_async(ROOT_DIR, DL_BINARY_MODEL_PATH, DL_MULTICLASS_MODEL_PATH)
+        if ARTIFACTS_DIR.is_dir():
+            logger.info("artifacts/: %s", sorted(p.name for p in ARTIFACTS_DIR.iterdir()))
         logger.info("API startup complete")
     except Exception as e:
         logger.error(f"Error during startup: {str(e)}")
@@ -107,6 +114,15 @@ async def health():
 
         dl_bin = DL_BINARY_PRE_PATH.exists() and DL_BINARY_MODEL_PATH.exists()
         dl_multi = DL_MULTICLASS_PRE_PATH.exists() and DL_MULTICLASS_MODEL_PATH.exists()
+        booting = bootstrap_thread_alive()
+
+        def _deep_status(ready: bool) -> str:
+            if ready:
+                return "available"
+            if booting:
+                return "initializing"
+            return "not found"
+
         status = {
             "status": "ok",
             "message": "API is running",
@@ -121,10 +137,15 @@ async def health():
             "models": {
                 "binary": "available" if binary_available else "not found",
                 "multiclass": "available" if multiclass_available else "not found",
-                "binary_deep": "available" if dl_bin else "not found",
-                "multiclass_deep": "available" if dl_multi else "not found",
+                "binary_deep": _deep_status(dl_bin),
+                "multiclass_deep": _deep_status(dl_multi),
             },
         }
+        if os.environ.get("RENDER"):
+            status["models"]["deep_bootstrap_note"] = (
+                "If binary_deep stays 'initializing', training is still running (~2–8 min on CPU). "
+                "If it stays 'not found' with no initializing, check Render logs for train_dl errors."
+            )
         return status
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")

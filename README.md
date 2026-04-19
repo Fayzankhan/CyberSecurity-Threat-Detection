@@ -89,7 +89,8 @@ To deploy your own instance:
      - Environment Variables:
        - `ENVIRONMENT`: `production`
    - If the service already exists: open **Settings → Build & Deploy**, paste the build command above, then **Manual Deploy → Clear build cache & deploy**.
-   - After deploy, open `https://<your-service>.onrender.com/health` and confirm `models.binary_deep` and `models.multiclass_deep` are `"available"`.
+   - After deploy, open `https://<your-service>.onrender.com/health`. `binary_deep` may show **`initializing`** for a few minutes while the API runs `train_dl --quick` on the server (Render often ships only **git-tracked** files, so DL weights may be created at runtime). When both show **`available`**, the PyTorch backend is ready.
+   - Optional: run `python -m src.train_dl --quick` locally, then `git add` the new files under `artifacts/` (e.g. `model_dl_*.pt`, `preprocess_dl_*.joblib`) so they deploy without a CPU warmup on every new instance.
 
 2. **Deploy the Streamlit Frontend**:
    - Go to [Streamlit Cloud](https://share.streamlit.app)

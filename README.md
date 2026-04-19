@@ -74,13 +74,22 @@ To deploy your own instance:
 1. **Deploy the FastAPI Backend**:
    - Fork this repository
    - Sign up on [Render.com](https://render.com)
-   - Create a new Web Service
+   - Create a new Web Service (or use **Blueprint** from `render.yaml` so settings stay in sync)
    - Connect your repository
    - Configure:
-     - Build Command: `pip install -r requirements.txt`
-     - Start Command: `gunicorn src.app.api:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT`
+     - **Build Command** (required for PyTorch / “CNN/LSTM” in the UI — do not use `pip install` only):
+       ```bash
+       bash scripts/render_build.sh
+       ```
+       This installs dependencies, runs `python -m src.train_dl --quick`, and **fails the build** if deep-learning artifacts are missing.
+     - **Start Command**:
+       ```bash
+       gunicorn src.app.api:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+       ```
      - Environment Variables:
        - `ENVIRONMENT`: `production`
+   - If the service already exists: open **Settings → Build & Deploy**, paste the build command above, then **Manual Deploy → Clear build cache & deploy**.
+   - After deploy, open `https://<your-service>.onrender.com/health` and confirm `models.binary_deep` and `models.multiclass_deep` are `"available"`.
 
 2. **Deploy the Streamlit Frontend**:
    - Go to [Streamlit Cloud](https://share.streamlit.app)

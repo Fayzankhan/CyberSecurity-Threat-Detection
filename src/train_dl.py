@@ -47,6 +47,9 @@ BATCH_SIZE = 4096
 LR = 1e-3
 EPOCHS_BINARY = 40
 EPOCHS_MULTI = 45
+# Short runs for Render/CI (valid checkpoints; lower quality than full training)
+EPOCHS_BINARY_QUICK = 3
+EPOCHS_MULTI_QUICK = 4
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -102,7 +105,8 @@ def _binary_ckpt_extra(arch: str) -> dict:
     return d
 
 
-def train_binary(arch: str) -> None:
+def train_binary(arch: str, *, epochs: int | None = None) -> None:
+    n_epochs = EPOCHS_BINARY if epochs is None else epochs
     download_if_needed()
     train_df, test_df = load_nsl_kdd()
     train_df = binarize_label(train_df)
@@ -131,7 +135,8 @@ def train_binary(arch: str) -> None:
     crit = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     model.train()
-    for epoch in range(EPOCHS_BINARY):
+    log_every = max(1, n_epochs // 4)
+    for epoch in range(n_epochs):
         total = 0.0
         for xb, yb in loader:
             opt.zero_grad()
@@ -140,8 +145,8 @@ def train_binary(arch: str) -> None:
             loss.backward()
             opt.step()
             total += loss.item() * len(xb)
-        if (epoch + 1) % 10 == 0:
-            print(f"  binary [{arch}] epoch {epoch + 1}/{EPOCHS_BINARY}  loss={total / len(Xtr):.4f}")
+        if (epoch + 1) % log_every == 0 or epoch == n_epochs - 1:
+            print(f"  binary [{arch}] epoch {epoch + 1}/{n_epochs}  loss={total / len(Xtr):.4f}")
 
     model.eval()
     with torch.no_grad():
@@ -176,7 +181,8 @@ def train_binary(arch: str) -> None:
     print(f"ROC-AUC: {roc:.4f}")
 
 
-def train_multiclass(arch: str) -> None:
+def train_multiclass(arch: str, *, epochs: int | None = None) -> None:
+    n_epochs = EPOCHS_MULTI if epochs is None else epochs
     download_if_needed()
     train_df, test_df = load_nsl_kdd()
     train_df = add_coarse_attack(train_df)
@@ -207,7 +213,8 @@ def train_multiclass(arch: str) -> None:
     crit = nn.CrossEntropyLoss(weight=class_w)
 
     model.train()
-    for epoch in range(EPOCHS_MULTI):
+    log_every = max(1, n_epochs // 3)
+    for epoch in range(n_epochs):
         total = 0.0
         for xb, yb in loader:
             opt.zero_grad()
@@ -216,8 +223,8 @@ def train_multiclass(arch: str) -> None:
             loss.backward()
             opt.step()
             total += loss.item() * len(xb)
-        if (epoch + 1) % 15 == 0:
-            print(f"  multiclass [{arch}] epoch {epoch + 1}/{EPOCHS_MULTI}  loss={total / len(Xtr):.4f}")
+        if (epoch + 1) % log_every == 0 or epoch == n_epochs - 1:
+            print(f"  multiclass [{arch}] epoch {epoch + 1}/{n_epochs}  loss={total / len(Xtr):.4f}")
 
     model.eval()
     with torch.no_grad():
@@ -264,9 +271,19 @@ def main() -> None:
         default="cnn1d",
         help="cnn1d: Conv1d stack over feature dimension; lstm: sequence of L steps with 1 input dim",
     )
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help=f"Few epochs for deploy/CI ({EPOCHS_BINARY_QUICK}/{EPOCHS_MULTI_QUICK}); full quality: omit this flag.",
+    )
     args = parser.parse_args()
-    train_binary(args.arch)
-    train_multiclass(args.arch)
+    if args.quick:
+        print("=== train_dl --quick: shorter training (deploy-friendly) ===")
+        train_binary(args.arch, epochs=EPOCHS_BINARY_QUICK)
+        train_multiclass(args.arch, epochs=EPOCHS_MULTI_QUICK)
+    else:
+        train_binary(args.arch)
+        train_multiclass(args.arch)
 
 
 if __name__ == "__main__":

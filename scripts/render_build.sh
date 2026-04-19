@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Used by Render (see render.yaml). Fails the build if DL artifacts are missing.
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Resolve repo root from this script (not from cwd — Render cwd can differ).
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
 cd "$ROOT"
+export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
 
 python -m pip install --upgrade pip
 python -m pip install --no-cache-dir -r requirements.txt
@@ -10,10 +12,6 @@ python -m pip install --no-cache-dir -r requirements.txt
 echo "=== train_dl --quick (writes PyTorch backend artifacts) ==="
 python -m src.train_dl --quick
 
-echo "=== verify artifacts ==="
-test -f artifacts/model_dl_binary.pt
-test -f artifacts/preprocess_dl_binary.joblib
-test -f artifacts/model_dl_multiclass.pt
-test -f artifacts/preprocess_dl_multiclass.joblib
-ls -la artifacts/
+echo "=== verify DL artifacts (same paths as FastAPI) ==="
+python "$ROOT/scripts/verify_dl_artifacts.py"
 echo "=== Render build OK ==="

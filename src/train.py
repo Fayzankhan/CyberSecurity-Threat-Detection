@@ -15,8 +15,9 @@ from sklearn.preprocessing import OneHotEncoder
 
 from .utils.columns import CSV_COLUMNS, ALL_FEATURES, CATEGORICAL, LABEL, DIFFICULTY, ATTACK_TYPE_MAP, COARSE_CLASSES
 
-DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
-ARTIFACTS = Path(__file__).resolve().parent.parent.parent / "artifacts"
+# train.py lives in src/, so repo root is two levels up
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+ARTIFACTS = Path(__file__).resolve().parent.parent / "artifacts"
 
 TRAIN_URL = "https://raw.githubusercontent.com/defcom17/NSL_KDD/master/KDDTrain+.txt"
 TEST_URL  = "https://raw.githubusercontent.com/defcom17/NSL_KDD/master/KDDTest+.txt"

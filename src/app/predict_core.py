@@ -61,20 +61,19 @@ def run_binary_predict(df: pd.DataFrame, backend: str) -> Dict[str, Any]:
     if err:
         raise ValueError(err)
     if backend == "deep":
-        if not DL_BINARY_PRE_PATH.exists() or not DL_BINARY_MODEL_PATH.exists():
-            raise FileNotFoundError(
-                "Deep learning binary model not found. Run: python -m src.train_dl (default CNN) or --arch lstm"
-            )
-        from ..dl_backend import predict_binary_dl
+        if DL_BINARY_PRE_PATH.exists() and DL_BINARY_MODEL_PATH.exists():
+            from ..dl_backend import predict_binary_dl
 
-        predictions, probabilities = predict_binary_dl(
-            df, ALL_FEATURES, DL_BINARY_PRE_PATH, DL_BINARY_MODEL_PATH
-        )
-        return {
-            "predictions": predictions,
-            "probabilities": probabilities,
-            "model_backend": "deep",
-        }
+            predictions, probabilities = predict_binary_dl(
+                df, ALL_FEATURES, DL_BINARY_PRE_PATH, DL_BINARY_MODEL_PATH
+            )
+            return {
+                "predictions": predictions,
+                "probabilities": probabilities,
+                "model_backend": "deep",
+            }
+        # Fast production-safe fallback: keep predictions working even when DL artifacts are absent.
+        backend = "sklearn"
 
     model = load_binary_model()
     X = df[ALL_FEATURES]
@@ -97,20 +96,19 @@ def run_multiclass_predict(df: pd.DataFrame, backend: str) -> Dict[str, Any]:
     if err:
         raise ValueError(err)
     if backend == "deep":
-        if not DL_MULTICLASS_PRE_PATH.exists() or not DL_MULTICLASS_MODEL_PATH.exists():
-            raise FileNotFoundError(
-                "Deep learning multiclass model not found. Run: python -m src.train_dl (default CNN) or --arch lstm"
-            )
-        from ..dl_backend import predict_multiclass_dl
+        if DL_MULTICLASS_PRE_PATH.exists() and DL_MULTICLASS_MODEL_PATH.exists():
+            from ..dl_backend import predict_multiclass_dl
 
-        predictions, confidence = predict_multiclass_dl(
-            df, ALL_FEATURES, DL_MULTICLASS_PRE_PATH, DL_MULTICLASS_MODEL_PATH
-        )
-        return {
-            "predictions": predictions,
-            "confidence": confidence,
-            "model_backend": "deep",
-        }
+            predictions, confidence = predict_multiclass_dl(
+                df, ALL_FEATURES, DL_MULTICLASS_PRE_PATH, DL_MULTICLASS_MODEL_PATH
+            )
+            return {
+                "predictions": predictions,
+                "confidence": confidence,
+                "model_backend": "deep",
+            }
+        # Fast production-safe fallback: keep predictions working even when DL artifacts are absent.
+        backend = "sklearn"
 
     model = load_multiclass_model()
     X = df[ALL_FEATURES]

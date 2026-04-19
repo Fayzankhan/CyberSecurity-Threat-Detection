@@ -5,7 +5,8 @@ from pathlib import Path
 
 from .utils.columns import ALL_FEATURES
 
-ARTIFACTS = Path(__file__).resolve().parent.parent.parent / "artifacts"
+# predict_batch.py lives in src/, so repo root is two levels up
+ARTIFACTS = Path(__file__).resolve().parent.parent / "artifacts"
 
 def main():
     parser = argparse.ArgumentParser(description="Batch predict cyber threats from CSV logs.")

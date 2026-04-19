@@ -475,6 +475,8 @@ elif page == "Live Demo":
                         "/predict-batch",
                         prediction_payload(batch[ALL_FEATURES].to_dict(orient="records"), backend),
                     )
+                    if backend.startswith("PyTorch") and res.get("model_backend") == "sklearn":
+                        st.warning("Deep model not ready on API; automatically using RandomForest fallback.")
                     batch_preds = pd.Series(res["predictions"], index=batch.index)
                     batch_prob = pd.Series(res["probabilities"], index=batch.index)
                     df.loc[batch.index, "is_attack"] = batch_preds
@@ -484,6 +486,8 @@ elif page == "Live Demo":
                         "/predict-multiclass",
                         prediction_payload(batch[ALL_FEATURES].to_dict(orient="records"), backend),
                     )
+                    if backend.startswith("PyTorch") and res.get("model_backend") == "sklearn":
+                        st.warning("Deep model not ready on API; automatically using RandomForest fallback.")
                     batch_cls = pd.Series(res["predictions"], index=batch.index)
                     df.loc[batch.index, "predicted_class"] = batch_cls
 

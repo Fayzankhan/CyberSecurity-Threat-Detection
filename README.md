@@ -90,7 +90,7 @@ To deploy your own instance:
        - `ENVIRONMENT`: `production`
    - If the service already exists: open **Settings → Build & Deploy**, paste the build command above, then **Manual Deploy → Clear build cache & deploy**.
    - After deploy, open `https://<your-service>.onrender.com/health`. On free tier, deep models may remain unavailable and the API will use sklearn fallback to keep requests stable.
-   - Optional: run `python -m src.train_dl --quick` locally, then `git add` the new files under `artifacts/` (e.g. `model_dl_*.pt`, `preprocess_dl_*.joblib`) so they deploy without a CPU warmup on every new instance.
+   - Deep-learning checkpoints (`model_dl_*.pt`, `preprocess_dl_*.joblib`, `metrics_dl_*.json`) are **committed in this repo** so `/health` shows them as available on Render without training at deploy time. To refresh them: `python -m src.train_dl --quick`, then commit the updated files.
 
 2. **Deploy the Streamlit Frontend**:
    - Go to [Streamlit Cloud](https://share.streamlit.app)

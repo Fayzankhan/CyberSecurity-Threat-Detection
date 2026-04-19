@@ -1,9 +1,8 @@
-# Core ML dependencies (NumPy 2.x: PyTorch/sklearn wheels expect numpy._core; NumPy 1.24 breaks on Render)
+# Core ML dependencies (Render runtime uses sklearn fallback; keep deploy lightweight)
 numpy>=2.0.0,<2.3.0
 pandas>=2.2.0,<3
 scikit-learn>=1.4.2,<1.6
 joblib>=1.3.2,<2
-torch>=2.0.0,<3
 
 # API
 fastapi==0.110.0

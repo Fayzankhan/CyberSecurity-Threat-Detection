@@ -81,7 +81,7 @@ To deploy your own instance:
        ```bash
        bash scripts/render_build.sh
        ```
-       This installs dependencies, runs `python -m src.train_dl --quick` (which checks that DL files exist before exiting). The file `.render-buildpacks.json` must **not** override this with `pip install -e .` only — it is kept in sync with this command.
+       This installs dependencies only (lean build for Render free tier stability). The file `.render-buildpacks.json` must **not** override this with a conflicting command.
      - **Start Command**:
        ```bash
        gunicorn src.app.api:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
@@ -89,7 +89,7 @@ To deploy your own instance:
      - Environment Variables:
        - `ENVIRONMENT`: `production`
    - If the service already exists: open **Settings → Build & Deploy**, paste the build command above, then **Manual Deploy → Clear build cache & deploy**.
-   - After deploy, open `https://<your-service>.onrender.com/health`. `binary_deep` may show **`initializing`** for a few minutes while the API runs `train_dl --quick` on the server (Render often ships only **git-tracked** files, so DL weights may be created at runtime). When both show **`available`**, the PyTorch backend is ready.
+   - After deploy, open `https://<your-service>.onrender.com/health`. On free tier, deep models may remain unavailable and the API will use sklearn fallback to keep requests stable.
    - Optional: run `python -m src.train_dl --quick` locally, then `git add` the new files under `artifacts/` (e.g. `model_dl_*.pt`, `preprocess_dl_*.joblib`) so they deploy without a CPU warmup on every new instance.
 
 2. **Deploy the Streamlit Frontend**:

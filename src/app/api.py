@@ -143,8 +143,8 @@ async def health():
         }
         if os.environ.get("RENDER"):
             status["models"]["deep_bootstrap_note"] = (
-                "If binary_deep stays 'initializing', training is still running (~2–8 min on CPU). "
-                "If it stays 'not found' with no initializing, check Render logs for train_dl errors."
+                "Runtime deep bootstrap is disabled by default on Render free tier to avoid 512MB OOM. "
+                "Set ENABLE_RENDER_DL_BOOTSTRAP=true only on higher-memory instances."
             )
         return status
     except Exception as e:

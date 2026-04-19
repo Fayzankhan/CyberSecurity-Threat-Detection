@@ -21,6 +21,11 @@ def maybe_bootstrap_dl_async(root_dir: Path, dl_binary_model: Path, dl_multiclas
         return
     if not os.environ.get("RENDER"):
         return
+    # Free Render instances (512MB) are too small for reliable PyTorch training at runtime.
+    # Enable explicitly only if your plan/resources can handle it.
+    if os.environ.get("ENABLE_RENDER_DL_BOOTSTRAP", "").strip().lower() not in {"1", "true", "yes", "on"}:
+        logger.info("Runtime DL bootstrap is disabled (set ENABLE_RENDER_DL_BOOTSTRAP=true to enable).")
+        return
     if dl_binary_model.is_file() and dl_multiclass_model.is_file():
         return
 
